@@ -92,6 +92,9 @@
         "eu-west-1": {
           "AMI": "ami-f9dd458a"
         },
+        "eu-west-2": {
+            "AMI": "ami-058839cdc2af897e1"
+          },
         "ap-southeast-2": {
           "AMI": "ami-10918173"
         }
@@ -659,6 +662,16 @@
                 "",
                 [
                   "#!/bin/bash -xe\n",
+                  "set -x\n",
+                  "exec > >(tee /var/log/user-data.log|logger -t user-data ) 2>&1\n",
+                  "echo BEGIN\n",
+                  "date '+%Y-%m-%d %H:%M:%S'\n",
+                  "yum update -y\n",
+                    "yum install -y python-setuptools\n",
+                    "yum install -y wget\n",
+                    "mkdir -p /opt/aws/bin\n",
+                    "wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                    "easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-latest.tar.gz\n",
                   "# Helper function\n",
                   "function error_exit\n",
                   "{\n",
@@ -692,7 +705,10 @@
                   },
                   " || error_exit 'Failed to run cfn-init'\n",
                   "# Post-cfn work\n",
-                  
+
+                  "# Install dependencies for this script\n",
+                  "yum install -y wget || true \n",
+
                   "# Updating to Java 8\n",
                   "yum install -y java-1.8.0-openjdk.x86_64 || true \n",
                   "sudo /usr/sbin/alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java || true\n",
