@@ -296,7 +296,8 @@
             "configSets": {
               "install": [
                 "installConfig",
-                "installApp"
+                "installApp",
+                "installLogs"
               ]
             },
             "installConfig": {
@@ -376,12 +377,12 @@
             },
             "installLogs": {
               "commands": {
-                "00_install_aws_logs_agent":{
+                "00_download_aws_logs_agent":{
                     "command": "curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O"
 
                 },
                 "01_configure_aws_logs_agent":{
-                    "command": "python ./awslogs-agent-setup.py --region eu-west-2"
+                    "command": "source scl_source enable python27; python ./awslogs-agent-setup.py --region eu-west-2"
                 },
                 "02_create_state_directory": {
                   "command": "mkdir -p /var/awslogs/state"
