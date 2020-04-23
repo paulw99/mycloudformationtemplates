@@ -148,14 +148,24 @@
             "Version": "2012-10-17",
             "Statement": [
               {
-                "Action": "ec2:*",
+                "Action": [
+                  "ec2:DescribeInstances",
+                "ec2:TerminateInstances",
+                "ec2:RunInstances",
+                "ec2:StopInstances",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeImages",
+                "ec2:StartInstances",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeKeyPairs"
+              ],
                 "Effect": "Allow",
                 "Resource": "*"
               },
               {
                 "Effect": "Allow",
                 "Action": "elasticloadbalancing:*",
-                "Resource": "*"
+                "Resource": {"Fn::GetAtt" : [ "ElasticLoadBalancer", "Arn" ] } 
               },
               {
                 "Effect": "Allow",
@@ -169,7 +179,12 @@
               },
               {
                 "Effect": "Allow",
-                "Action": "s3:*",
+                "Action": [ "s3:DeleteObjectTagging",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:DeleteObject"
+                ],
                 "Resource": "*"
               },
               {
@@ -756,6 +771,12 @@
           ]
         }
       },
+
+
+
+
+
+      
       "ElasticLoadBalancer": {
         "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
         "Properties": {
