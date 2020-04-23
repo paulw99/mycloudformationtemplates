@@ -104,60 +104,6 @@
           "RetentionInDays": 7
         }
       },
-      "SwiftOtterJenkins": {
-        "Type": "AWS::IAM::User",
-        "Properties": {
-          "Policies": [
-            {
-              "PolicyName": "S3Access",
-              "PolicyDocument": {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Action": "s3:*",
-                    "Resource": {
-                      "Fn::Join": [
-                        "",
-                        [
-                          "arn:aws:s3:::",
-                          {
-                            "Ref": "S3Bucket"
-                          },
-                          "/*"
-                        ]
-                      ]
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              "PolicyName": "IAMAccess",
-              "PolicyDocument": {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "NotAction": "iam:*",
-                    "Resource": "*"
-                  }
-                ]
-              }
-            },
-            {
-              "PolicyName": "EC2Access",
-              "PolicyDocument": {
-                "Statement": [
-                  {
-                    "Effect": "Allow",
-                    "Action": "ec2:*",
-                    "Resource": "*"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      },
       "BuildRole": {
         "Type": "AWS::IAM::Role",
         "Properties": {
@@ -234,6 +180,13 @@
                   "ec2:*"
                 ],
                 "Resource": "*"
+              },
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "cloudformation:DescribeStackResource"
+                ],
+                "Resource": "*"
               }
             ]
           },
@@ -255,14 +208,7 @@
           ]
         }
       },
-      "HostKeys": {
-        "Type": "AWS::IAM::AccessKey",
-        "Properties": {
-          "UserName": {
-            "Ref": "SwiftOtterJenkins"
-          }
-        }
-      },
+
       "ServerGroup": {
         "Type": "AWS::AutoScaling::AutoScalingGroup",
         "Properties": {
@@ -296,8 +242,7 @@
             "configSets": {
               "install": [
                 "installConfig",
-                "installApp",
-                "installLogs"
+                "installApp"
               ]
             },
             "installConfig": {
@@ -492,37 +437,6 @@
             },
             "installApp": {
               "files": {
-                "/etc/aws.conf": {
-                  "content": {
-                    "Fn::Join": [
-                      "\n",
-                      [
-                        "[default]",
-                        "aws_access_key_id={{access_key}}",
-                        "aws_secret_access_key={{secret_key}}",
-                        "region = ",
-                        {
-                          "Ref": "AWS::Region"
-                        },
-                        "\n"
-                      ]
-                    ]
-                  },
-                  "context": {
-                    "access_key": {
-                      "Ref": "HostKeys"
-                    },
-                    "secret_key": {
-                      "Fn::GetAtt": [
-                        "HostKeys",
-                        "SecretAccessKey"
-                      ]
-                    }
-                  },
-                  "mode": "000700",
-                  "owner": "root",
-                  "group": "root"
-                },
                 "/usr/local/bin/jenkins-restore": {
                   "content": {
                     "Fn::Join": [
@@ -733,16 +647,9 @@
                   },
                   "    --resource LaunchConfig",
                   "    --configsets install",
-                  "    --access-key ",
+                  "    --role ",
                   {
-                    "Ref": "HostKeys"
-                  },
-                  "    --secret-key ",
-                  {
-                    "Fn::GetAtt": [
-                      "HostKeys",
-                      "SecretAccessKey"
-                    ]
+                    "Ref": "BuildRole"
                   },
                   "    --region ",
                   {
