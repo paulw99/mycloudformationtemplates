@@ -90,7 +90,7 @@
           "AMI": "ami-31490d51"
         },
         "eu-west-2": {
-          "AMI": "ami-058839cdc2af897e1"
+          "AMI": "ami-0bf0c40a41048bef8"
         },
         "ap-southeast-2": {
           "AMI": "ami-10918173"
@@ -498,7 +498,12 @@
                       [
                         "[default]",
                         "aws_access_key_id={{access_key}}",
-                        "aws_secret_access_key={{secret_key}}"
+                        "aws_secret_access_key={{secret_key}}",
+                        "region = ",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        "\n"
                       ]
                     ]
                   },
@@ -534,6 +539,7 @@
                         "",
                         "S3_TARGET=$1",
                         "JENKINS_HOME=$2",
+                        "source /opt/rh/python27/enable",
                         "if [[ -z \"`echo $S3_TARGET|grep '^s3://'`\" ]]; then",
                         "    echo -e $USAGE",
                         "    exit 1",
@@ -560,7 +566,8 @@
                         "",
                         "mkdir -p $JENKINS_HOME",
                         "tar zxf $LOCAL_BACKUP -C $JENKINS_HOME",
-                        "rm -f $LOCAL_BACKUP"
+                        "rm -f $LOCAL_BACKUP",
+                        ""
                       ]
                     ]
                   },
@@ -580,6 +587,7 @@
                         "Examples:\\n",
                         "$0 /var/lib/jenkins s3://mybucket/jenkins/jenkins-201405011901.tar.gz\"",
                         "",
+                        "source /opt/rh/python27/enable",
                         "JENKINS_HOME=$1",
                         "S3_TARGET=$2",
                         "if [[ -z \"`echo $S3_TARGET|grep '^s3://'`\" || ! -d \"$JENKINS_HOME\" ]]; then",
@@ -617,7 +625,8 @@
                         "AWS_CONFIG_FILE=/etc/aws.conf\n",
                         "PATH=/bin:/usr/bin::/usr/local/bin\n",
                         "source /usr/local/bin/jenkins-backup /var/lib/jenkins s3://{{s3_bucket}}/{{s3_prefix}}jenkins-`date +\\%Y\\%m\\%d\\%H\\%M.tar.gz` >> ~/jenkins.cron.log 2>&1\n",
-                        "sleep 60 && /opt/aws/bin/ec2-terminate-instances $(curl -s http://169.254.169.254/latest/meta-data/instance-id)"
+                        "sleep 60 && aws ec2 terminate-instances --instance-ids $(curl -s http://169.254.169.254/latest/meta-data/instance-id)\n",
+                        "\n"
                       ]
                     ]
                   },
@@ -690,11 +699,13 @@
                   "exec > >(tee /var/log/user-data.log|logger -t user-data ) 2>&1\n",
                   "echo BEGIN\n",
                   "date '+%Y-%m-%d %H:%M:%S'\n",
+                  "yum-config-manager --enable rhel-server-rhui-rhscl-7-rpms rhui-rhel-server-optional rhui-rhel-server-extras\n",
                   "yum update -y\n",
-                  "yum-config-manager --enable rhel-server-rhui-rhscl-7-rpms\n",
-                  "yum install -y python python27-python-pip python-setuptools\n",
-                  "scl enable python27 bash\n",
-                  "yum install -y wget\n",
+                  "yum install -y python python27-python-pip python-setuptools wget\n",
+                  "[ -f /opt/rh/python27/enable ] && source /opt/rh/python27/enable\n",
+                  "pip install --upgrade pip &> /dev/null\n",
+                  "pip install awscli --ignore-installed six &> /dev/null\n",
+
                   "mkdir -p /opt/aws/bin\n",
                   "wget https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
                   "easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-latest.tar.gz\n",
