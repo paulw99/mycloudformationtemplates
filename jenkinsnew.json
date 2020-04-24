@@ -347,11 +347,10 @@
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "configSets": {
-                        "install": [
-                            "installConfig",
-                            "installApp"
-                        ]
+                        "install": ["installConfig"],
+                        "deployApps": ["prepareRepos","installApp"]
                     },
+
                     "installConfig": {
                         "files": {
                             "/etc/cfn/cfn-hup.conf": {
@@ -431,6 +430,20 @@
                                     ]
                                 }
                             }
+                        }
+                    },
+                    "prepareRepos": {
+                        "commands": {
+                            
+                            "01_get_jenkins_repo": {
+                                "command" : "curl https://pkg.jenkins.io/redhat-stable/jenkins.repo -o /etc/yum.repos.d/jenkins.repo"
+                            },
+                            "00_enable_rhel_repos": {
+                                "command": "yum-config-manager --enable rhel-7-server-rhui-extras-rpms rhel-server-rhui-rhscl-7-rpms rhel-7-server-rhui-optional-rpms"
+                            },
+                            "02_import_jenkins_repo": {
+                                "command" : "rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key"
+                            },
                         }
                     },
                     "installLogs": {
@@ -547,7 +560,22 @@
                             }
                         }
                     },
+
+
                     "installApp": {
+                        "packages": {
+                            "yum": {
+                                "rh-git218": []
+                            }
+                        },
+                        "commands": {
+                            "setJava"     : { 
+                                "command" : "sudo /usr/sbin/alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java || true"},
+                            "setJavac"     : {
+                                "command" : "sudo /usr/sbin/alternatives --set javac /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/javac || true"},
+                            "removeJava1.7"     : { 
+                                "command" : "yum remove java-1.7 || true "}
+                        },
                         "files": {
                             "/usr/local/bin/jenkins-restore": {
                                 "content": {
@@ -746,14 +774,13 @@
                                 "'\n",
                                 "  exit 1\n",
                                 "}\n",
-                                "yum install -y rh-git218\n",
-                                "ln -s /opt/rh/rh-git218/root/usr/bin/git /usr/bin\n",
+                                
                                 "/opt/aws/bin/cfn-init --stack ",
                                 {
                                     "Ref": "AWS::StackName"
                                 },
                                 "    --resource LaunchConfig",
-                                "    --configsets install",
+                                "    --configsets install,deployApps",
                                 "    --role ",
                                 {
                                     "Ref": "BuildRole"
@@ -765,13 +792,12 @@
                                 " || error_exit 'Failed to run cfn-init'\n",
                                 "# Post-cfn work\n",
                                 "# Updating to Java 8\n",
-                                "yum install -y java-1.8.0-openjdk.x86_64 || true \n",
+
                                 "sudo /usr/sbin/alternatives --set java /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/java || true\n",
                                 "sudo /usr/sbin/alternatives --set javac /usr/lib/jvm/jre-1.8.0-openjdk.x86_64/bin/javac || true \n",
                                 "yum remove java-1.7 || true \n",
-                                "sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo\n",
-                                "sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key\n",
-                                "yum install -y jenkins\n",
+
+
                                 "sudo mkdir -p /var/lib/jenkins\n",
                                 "sudo chown -R jenkins:jenkins /var/lib/jenkins\n",
                                 "# Handle case where cron doesn't detect the new /etc/cron.d file\n",
