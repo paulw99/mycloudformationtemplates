@@ -26,6 +26,12 @@
             ],
             "ConstraintDescription": "must be a valid EC2 instance type."
         },
+        "bootVolumeSize": {
+            "Description": "Size of the instances boot volume",
+            "Default": "20",
+            "Type": "String"
+        },
+
         "SshKey": {
             "Description": "Name of an existing EC2 keypair to enable SSH access to the instances",
             "Default": "your-ssh-key",
@@ -90,7 +96,7 @@
                 "AMI": "ami-31490d51"
             },
             "eu-west-2": {
-                "AMI": "ami-0bf0c40a41048bef8"
+                "AMI": "ami-01420ff79987d6197"
             },
             "ap-southeast-2": {
                 "AMI": "ami-10918173"
@@ -107,12 +113,6 @@
                 "SecurityGroups": [
                     {
                         "Ref": "LbSecurityGroup"
-                    }
-                ],
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": "mytag"
                     }
                 ],
                 "Type": "application"
@@ -565,7 +565,9 @@
                     "installApp": {
                         "packages": {
                             "yum": {
-                                "rh-git218": []
+                                "rh-git218": [],
+                                "jenkins": [],
+                                "java-1.8.0-openjdk.x86_64": []
                             }
                         },
                         "commands": {
@@ -732,8 +734,12 @@
                             "Ref": "AWS::Region"
                         },
                         "AMI"
-                    ]
+                    ] 
                 },
+                "BlockDeviceMappings" : [ {
+                    "DeviceName" : "/dev/sda1",
+                    "Ebs" : {"VolumeSize" : {"Ref": "bootVolumeSize"}}
+                 } ],
                 "SecurityGroups": [
                     {
                         "Ref": "ServerSecurityGroup"
