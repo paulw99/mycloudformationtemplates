@@ -31,6 +31,9 @@ Parameters:
     Description: Name of an existing EC2 keypair to enable SSH access to the instances
     Default: your-ssh-key
     Type: 'AWS::EC2::KeyPair::KeyName'
+  tagName:
+    Description: The tag assigned to the EC2 instance Name field
+    Type: String
   IPWhitelist:
     Description: IP Address to Whitelist (your IP address followed by /32)
     MinLength: '9'
@@ -209,7 +212,7 @@ Resources:
       AvailabilityZones: !GetAZs ''
       Tags:
         - Key: Name
-          Value: pjwJenkinsScratch
+          Value: !Ref tagName
           PropagateAtLaunch: true
       LaunchConfigurationName: !Ref EC2Instance
       MinSize: '1'
@@ -745,6 +748,7 @@ Metadata:
           - SshKey
           - InstanceType
           - bootVolumeSize
+          - tagName
       - Label:
           default: S3 Bucket for application backup and recovery
         Parameters:
